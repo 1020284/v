@@ -6,9 +6,14 @@ import { getSocket } from '@/app/providers';
 
 export default function ChatRoom() {
   const [messageText, setMessageText] = useState('');
+  const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
   const messages = useChatStore((state) => state.messages);
   const userName = useChatStore((state) => state.userName);
+  const addReaction = useChatStore((state) => state.addReaction);
+  const toggleLike = useChatStore((state) => state.toggleLike);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const reactions = ['😂', '❤️', '🔥', '👍', '🎉', '😲'];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -27,6 +32,18 @@ export default function ChatRoom() {
     }
   };
 
+  const handleReaction = (emoji: string, messageId: string) => {
+    const socket = getSocket();
+    socket?.emit('addReaction', { messageId, emoji, userName });
+    addReaction(messageId, emoji, userName);
+  };
+
+  const handleLike = (messageId: string) => {
+    const socket = getSocket();
+    socket?.emit('toggleLike', { messageId, userId: userName });
+    toggleLike(messageId, userName);
+  };
+
   return (
     <div className="flex flex-col h-full rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 overflow-hidden">
       {/* Header */}
@@ -42,13 +59,13 @@ export default function ChatRoom() {
             <p>No messages yet. Be the first to say hello! 👋</p>
           </div>
         ) : (
-          messages.map((msg, idx) => (
+          messages.map((msg) => (
             <div
-              key={idx}
+              key={msg.id}
               className={`flex ${msg.from === userName ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-xs px-4 py-2 rounded-lg ${
+                className={`max-w-xs group px-4 py-2 rounded-lg ${
                   msg.from === userName
                     ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
                     : 'bg-white/10 text-white/90 border border-white/20'
@@ -58,9 +75,55 @@ export default function ChatRoom() {
                   <p className="text-xs font-semibold text-white/70 mb-1">{msg.from}</p>
                 )}
                 <p className="break-words">{msg.text}</p>
+                
+                {/* Reactions */}
+                {Object.keys(msg.reactions).length > 0 && (
+                  <div className="flex gap-1 mt-2 flex-wrap">
+                    {Object.entries(msg.reactions).map(([emoji, users]) => (
+                      <button
+                        key={emoji}
+                        onClick={() => handleReaction(emoji, msg.id)}
+                        className="text-xs bg-white/20 hover:bg-white/30 rounded-full px-2 py-1 transition"
+                        title={users.join(', ')}
+                      >
+                        {emoji} {users.length}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <p className="text-xs mt-1 opacity-60">
                   {new Date(msg.timestamp).toLocaleTimeString()}
                 </p>
+              </div>
+
+              {/* Action buttons */}
+              <div className="ml-2 opacity-0 group-hover:opacity-100 transition flex flex-col gap-1">
+                <button
+                  onClick={() => handleLike(msg.id)}
+                  className={`text-lg ${
+                    msg.likes.includes(userName) ? 'opacity-100' : 'opacity-60 hover:opacity-100'
+                  }`}
+                  title={`Likes: ${msg.likes.length}`}
+                >
+                  ❤️ {msg.likes.length}
+                </button>
+                <div className="relative group/reactions">
+                  <button className="text-lg opacity-60 hover:opacity-100">
+                    😊
+                  </button>
+                  <div className="hidden group-hover/reactions:flex flex-col gap-1 absolute top-8 right-0 bg-gray-900 border border-white/20 rounded p-2 z-10">
+                    {reactions.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => handleReaction(emoji, msg.id)}
+                        className="text-lg hover:scale-125 transition"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           ))

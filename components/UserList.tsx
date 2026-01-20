@@ -4,9 +4,10 @@ import { useChatStore } from '@/lib/store';
 
 interface UserListProps {
   onCallClick: () => void;
+  onPrivateChat: (userId: string, userName: string) => void;
 }
 
-export default function UserList({ onCallClick }: UserListProps) {
+export default function UserList({ onCallClick, onPrivateChat }: UserListProps) {
   const users = useChatStore((state) => state.users);
   const userName = useChatStore((state) => state.userName);
   const setCallWith = useChatStore((state) => state.setCallWith);
@@ -45,12 +46,22 @@ export default function UserList({ onCallClick }: UserListProps) {
                 </div>
               </div>
               {user.name !== userName && (
-                <button
-                  onClick={() => handleCallClick(user.name)}
-                  className="ml-2 px-2 py-1 text-xs bg-purple-500 hover:bg-purple-600 text-white rounded transition"
-                >
-                  🎙️
-                </button>
+                <div className="ml-2 flex gap-1">
+                  <button
+                    onClick={() => onPrivateChat(user.id, user.name)}
+                    className="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded transition"
+                    title="Send message"
+                  >
+                    💬
+                  </button>
+                  <button
+                    onClick={() => handleCallClick(user.name)}
+                    className="px-2 py-1 text-xs bg-purple-500 hover:bg-purple-600 text-white rounded transition"
+                    title="Voice call"
+                  >
+                    🎙️
+                  </button>
+                </div>
               )}
             </div>
           ))

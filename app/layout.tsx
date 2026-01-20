@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ChatHub - Real-time Chat & Voice",
-  description: "Chat with everyone and voice call in real-time",
+  title: "the chat - Real-time Chat & Voice",
+  description: "Chat with everyone, voice call, react to messages, and play games in real-time",
 };
 
 export default function RootLayout({
