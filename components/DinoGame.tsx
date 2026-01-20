@@ -19,39 +19,63 @@ export default function DinoGame({ onClose }: DinoGameProps) {
   const [obstacles, setObstacles] = useState<{ id: number; x: number }[]>([]);
   const [dinoY, setDinoY] = useState(0);
   
-  const gameLoopRef = useRef<NodeJS.Timeout | null>(null);
-  const spawnObstacleRef = useRef<NodeJS.Timeout | null>(null);
-  const obstacleIdRef = useRef(0);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const velocityRef = useRef(0);
-  const difficultyRef = useRef(1); // Difficulty multiplier
+  const difficultyRef = useRef(1);
+  const gameStateRef = useRef({
+    dinoY: 0,
+    isJumping: false,
+    score: 0,
+    gameOver: false,
+    gameStarted: false,
+    obstacles: [] as { id: number; x: number }[],
+    velocity: 0,
+    lastSpawn: Date.now(),
+  });
+  const obstacleIdRef = useRef(0);
 
-  const GRAVITY = 0.6;
-  const JUMP_STRENGTH = 15;
+  const GRAVITY = 0.5;
+  const JUMP_STRENGTH = 12;
   const GAME_WIDTH = 800;
-  const GROUND_Y = 300;
+  const GAME_HEIGHT = 300;
+  const GROUND_Y = 240;
+  const DINO_SIZE = 30;
+  const DINO_X = 50;
   const OBSTACLE_WIDTH = 20;
   const OBSTACLE_HEIGHT = 40;
 
   const handleJump = () => {
-    if (!isJumping && !gameOver && gameStarted) {
-      setIsJumping(true);
+    if (!gameStateRef.current.isJumping && !gameStateRef.current.gameOver && gameStateRef.current.gameStarted) {
+      gameStateRef.current.isJumping = true;
       velocityRef.current = -JUMP_STRENGTH;
+      setIsJumping(true);
     }
   };
 
   const startGame = () => {
-    setGameStarted(true);
-    setGameOver(false);
-    setScore(0);
-    setObstacles([]);
-    setDinoY(0);
-    velocityRef.current = 0;
     obstacleIdRef.current = 0;
+    gameStateRef.current = {
+      dinoY: 0,
+      isJumping: false,
+      score: 0,
+      gameOver: false,
+      gameStarted: true,
+      obstacles: [],
+      velocity: 0,
+      lastSpawn: Date.now(),
+    };
+    velocityRef.current = 0;
     difficultyRef.current = 1;
+    setScore(0);
+    setDinoY(0);
+    setIsJumping(false);
+    setGameOver(false);
+    setGameStarted(true);
+    setObstacles([]);
   };
 
   const submitScore = () => {
-    const finalScore = Math.floor(score / 10);
+    const finalScore = gameStateRef.current.score;
     const socket = getSocket();
     socket?.emit('submitGameScore', { score: finalScore, userName });
     addGameScore({ userId: userName, userName, score: finalScore, timestamp: Date.now() });
@@ -61,64 +85,69 @@ export default function DinoGame({ onClose }: DinoGameProps) {
   useEffect(() => {
     if (!gameStarted || gameOver) return;
 
-    gameLoopRef.current = setInterval(() => {
-      // Physics
-      velocityRef.current += GRAVITY;
-      setDinoY((prev) => {
-        const newY = prev + velocityRef.current;
-        if (newY >= 0) {
-          setIsJumping(false);
-          return 0;
+    const gameLoop = setInterval(() => {
+      gameStateRef.current.velocity += GRAVITY;
+      gameStateRef.current.dinoY += gameStateRef.current.velocity;
+
+      // Ground collision
+      if (gameStateRef.current.dinoY >= 0) {
+        gameStateRef.current.dinoY = 0;
+        gameStateRef.current.velocity = 0;
+        gameStateRef.current.isJumping = false;
+        setIsJumping(false);
+      }
+
+      // Update difficulty
+      difficultyRef.current = 1 + gameStateRef.current.score * 0.05;
+
+      // Move obstacles
+      gameStateRef.current.obstacles = gameStateRef.current.obstacles
+        .map((obs) => ({ ...obs, x: obs.x - 8 * difficultyRef.current }))
+        .filter((obs) => obs.x > -OBSTACLE_WIDTH);
+
+      // Collision detection
+      gameStateRef.current.obstacles.forEach((obs) => {
+        const dinoLeft = DINO_X;
+        const dinoRight = DINO_X + DINO_SIZE;
+        const dinoTop = GROUND_Y + gameStateRef.current.dinoY;
+        const dinoBottom = GROUND_Y + gameStateRef.current.dinoY + DINO_SIZE;
+
+        const obsLeft = obs.x;
+        const obsRight = obs.x + OBSTACLE_WIDTH;
+        const obsTop = GROUND_Y;
+        const obsBottom = GROUND_Y + OBSTACLE_HEIGHT;
+
+        if (dinoRight > obsLeft && dinoLeft < obsRight && dinoBottom > obsTop && dinoTop < obsBottom) {
+          gameStateRef.current.gameOver = true;
+          setGameOver(true);
         }
-        return newY;
       });
 
-      // Obstacle movement and collision
-      setObstacles((prev) => {
-        const updated = prev
-          .map((obs) => ({ ...obs, x: obs.x - 8 * difficultyRef.current }))
-          .filter((obs) => obs.x > -OBSTACLE_WIDTH);
-
-        // Collision detection
-        updated.forEach((obs) => {
-          if (
-            obs.x < 40 + 30 &&
-            obs.x + OBSTACLE_WIDTH > 40 &&
-            dinoY + 30 < GROUND_Y + OBSTACLE_HEIGHT
-          ) {
-            setGameOver(true);
-          }
+      // Spawn obstacles
+      const now = Date.now();
+      const spawnRate = Math.max(1000, 2500 / difficultyRef.current);
+      if (now - gameStateRef.current.lastSpawn > spawnRate) {
+        gameStateRef.current.obstacles.push({
+          id: obstacleIdRef.current++,
+          x: GAME_WIDTH,
         });
+        gameStateRef.current.lastSpawn = now;
+      }
 
-        return updated;
-      });
+      // Increase score
+      gameStateRef.current.score += 1;
 
-      // Increase difficulty over time
-      const currentScore = Math.floor(score / 10);
-      difficultyRef.current = 1 + currentScore * 0.05; // Gradually increase speed
-
-      setScore((prev) => prev + 1);
+      setScore(gameStateRef.current.score);
+      setDinoY(gameStateRef.current.dinoY);
+      setObstacles([...gameStateRef.current.obstacles]);
     }, 30);
 
-    return () => clearInterval(gameLoopRef.current as NodeJS.Timeout);
-  }, [gameStarted, gameOver, dinoY, score]);
-
-  useEffect(() => {
-    if (!gameStarted || gameOver) return;
-
-    spawnObstacleRef.current = setInterval(() => {
-      setObstacles((prev) => [
-        ...prev,
-        { id: obstacleIdRef.current++, x: GAME_WIDTH },
-      ]);
-    }, Math.max(1500, 3000 / difficultyRef.current)); // Spawn faster as difficulty increases
-
-    return () => clearInterval(spawnObstacleRef.current as NodeJS.Timeout);
+    return () => clearInterval(gameLoop);
   }, [gameStarted, gameOver]);
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
+      if (e.code === 'Space' && gameStateRef.current.gameStarted) {
         e.preventDefault();
         handleJump();
       }
@@ -126,7 +155,7 @@ export default function DinoGame({ onClose }: DinoGameProps) {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [isJumping, gameOver, gameStarted]);
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -147,16 +176,18 @@ export default function DinoGame({ onClose }: DinoGameProps) {
         ) : (
           <div
             className="relative bg-gradient-to-b from-sky-200 to-sky-100 rounded-lg overflow-hidden border-4 border-white cursor-pointer"
-            style={{ width: GAME_WIDTH, height: 400 }}
+            style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
             onClick={handleJump}
+            ref={canvasRef}
           >
             {/* Ground */}
-            <div className="absolute bottom-0 w-full h-20 bg-gradient-to-b from-yellow-600 to-yellow-700" />
+            <div className="absolute bottom-0 w-full h-12 bg-gradient-to-b from-yellow-600 to-yellow-700" />
 
             {/* Dino */}
             <div
-              className="absolute left-10 w-8 h-8 bg-green-600 rounded transition-all"
+              className="absolute w-8 h-8 text-3xl transition-all flex items-center justify-center"
               style={{
+                left: DINO_X,
                 bottom: GROUND_Y + dinoY,
               }}
             >
@@ -179,14 +210,14 @@ export default function DinoGame({ onClose }: DinoGameProps) {
 
             {/* Score */}
             <div className="absolute top-4 left-4 text-2xl font-bold text-black">
-              Score: {Math.floor(score / 10)}
+              Score: {score}
             </div>
 
             {gameOver && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 rounded">
                 <p className="text-4xl font-bold text-white mb-4 animate-bounce">Game Over!</p>
                 <p className="text-2xl text-yellow-300 mb-8">
-                  Final Score: {Math.floor(score / 10)}
+                  Final Score: {score}
                 </p>
                 <div className="space-x-4">
                   <button
