@@ -49,15 +49,17 @@ export default function UserList({ onCallClick, onPrivateChat }: UserListProps) 
                 <div className="ml-2 flex gap-1">
                   <button
                     onClick={() => onPrivateChat(user.id, user.name)}
-                    className="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded transition"
-                    title="Send message"
+                    className="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded transition active:scale-95 hover:scale-105"
+                    title={`Send message to ${user.name}`}
+                    aria-label={`Message ${user.name}`}
                   >
                     💬
                   </button>
                   <button
                     onClick={() => handleCallClick(user.name)}
-                    className="px-2 py-1 text-xs bg-purple-500 hover:bg-purple-600 text-white rounded transition"
-                    title="Voice call"
+                    className="px-2 py-1 text-xs bg-purple-500 hover:bg-purple-600 text-white rounded transition active:scale-95 hover:scale-105"
+                    title={`Call ${user.name}`}
+                    aria-label={`Call ${user.name}`}
                   >
                     🎙️
                   </button>

@@ -9,7 +9,7 @@ export default function NameSelector() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputName.trim()) {
+    if (inputName.trim().length > 0 && inputName.trim().length <= 50) {
       setUserName(inputName.trim());
     }
   };
@@ -33,8 +33,9 @@ export default function NameSelector() {
               <input
                 type="text"
                 value={inputName}
-                onChange={(e) => setInputName(e.target.value)}
+                onChange={(e) => setInputName(e.target.value.slice(0, 50))}
                 placeholder="Enter your name..."
+                maxLength={50}
                 className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:bg-white/20 transition font-medium"
                 autoFocus
               />
@@ -42,7 +43,8 @@ export default function NameSelector() {
 
             <button
               type="submit"
-              className="w-full mt-6 px-4 py-3 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 text-white font-bold rounded-lg hover:from-purple-600 hover:via-pink-600 hover:to-red-600 transition transform hover:scale-105 shadow-lg"
+              disabled={!inputName.trim()}
+              className="w-full mt-6 px-4 py-3 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 text-white font-bold rounded-lg hover:from-purple-600 hover:via-pink-600 hover:to-red-600 transition transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 active:scale-95"
             >
               Join The Chat
             </button>

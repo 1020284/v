@@ -44,26 +44,27 @@ export default function PrivateChat({ withUserId, withUserName }: PrivateChatPro
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (messageText.trim()) {
-      const socket = getSocket();
-      socket?.emit('privateMessage', {
-        to: withUserId,
-        text: messageText,
-        fromName: userName,
-      });
+    const trimmed = messageText.trim();
+    if (!trimmed || trimmed.length > 1000) return; // Max 1000 chars
+    const socket = getSocket();
+    if (!socket) return;
+    socket.emit('privateMessage', {
+      to: withUserId,
+      text: trimmed,
+      fromName: userName,
+    });
 
-      const msg = {
-        id: `pmsg_${Date.now()}`,
-        from: userName,
-        text: messageText,
-        timestamp: Date.now(),
-        fromId: 'self',
-        reactions: {},
-        likes: [],
-      };
-      addPrivateMessage(withUserId, msg);
-      setMessageText('');
-    }
+    const msg = {
+      id: `pmsg_${Date.now()}`,
+      from: userName,
+      text: trimmed,
+      timestamp: Date.now(),
+      fromId: 'self',
+      reactions: {},
+      likes: [],
+    };
+    addPrivateMessage(withUserId, msg);
+    setMessageText('');
   };
 
   return (

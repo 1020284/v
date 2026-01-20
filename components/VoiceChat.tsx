@@ -54,9 +54,9 @@ export default function VoiceChat({ onClose }: VoiceChatProps) {
           setCallStatus('connected');
         });
 
-        peer.on('error', (err) => {
+        peer.on('error', (err: any) => {
           console.error('Peer error:', err);
-          setError('Connection error');
+          setError(`Connection error: ${err.message || 'Unknown error'}`);
         });
 
         peer.on('close', () => {
@@ -68,9 +68,11 @@ export default function VoiceChat({ onClose }: VoiceChatProps) {
         }
 
         peerRef.current = peer;
-      } catch (err) {
+      } catch (err: any) {
         console.error('Media error:', err);
-        setError('Cannot access microphone');
+        setError(err.name === 'NotAllowedError' 
+          ? 'Microphone permission denied' 
+          : 'Cannot access microphone');
       }
     };
 

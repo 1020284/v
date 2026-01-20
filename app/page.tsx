@@ -32,11 +32,12 @@ export default function Home() {
   const getOrCreatePrivateChat = useChatStore((state) => state.getOrCreatePrivateChat);
 
   const handleCreateGroup = () => {
-    if (groupName.trim()) {
-      createGroup(groupName, users);
-      setGroupName('');
-      setShowGroupCreator(false);
-    }
+    const trimmedName = groupName.trim();
+    if (!trimmedName || trimmedName.length > 50) return;
+    createGroup(trimmedName, users);
+    setGroupName('');
+    setShowGroupCreator(false);
+    setCurrentView('group');
   };
 
   const selectedGroup = selectedGroupId ? groupChats.get(selectedGroupId) : null;

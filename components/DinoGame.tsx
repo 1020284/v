@@ -23,6 +23,7 @@ export default function DinoGame({ onClose }: DinoGameProps) {
   const spawnObstacleRef = useRef<NodeJS.Timeout | null>(null);
   const obstacleIdRef = useRef(0);
   const velocityRef = useRef(0);
+  const difficultyRef = useRef(1); // Difficulty multiplier
 
   const GRAVITY = 0.6;
   const JUMP_STRENGTH = 15;
@@ -46,12 +47,14 @@ export default function DinoGame({ onClose }: DinoGameProps) {
     setDinoY(0);
     velocityRef.current = 0;
     obstacleIdRef.current = 0;
+    difficultyRef.current = 1;
   };
 
   const submitScore = () => {
+    const finalScore = Math.floor(score / 10);
     const socket = getSocket();
-    socket?.emit('submitGameScore', { score, userName });
-    addGameScore({ userId: userName, userName, score, timestamp: Date.now() });
+    socket?.emit('submitGameScore', { score: finalScore, userName });
+    addGameScore({ userId: userName, userName, score: finalScore, timestamp: Date.now() });
     onClose();
   };
 
@@ -73,7 +76,7 @@ export default function DinoGame({ onClose }: DinoGameProps) {
       // Obstacle movement and collision
       setObstacles((prev) => {
         const updated = prev
-          .map((obs) => ({ ...obs, x: obs.x - 8 }))
+          .map((obs) => ({ ...obs, x: obs.x - 8 * difficultyRef.current }))
           .filter((obs) => obs.x > -OBSTACLE_WIDTH);
 
         // Collision detection
@@ -90,11 +93,15 @@ export default function DinoGame({ onClose }: DinoGameProps) {
         return updated;
       });
 
+      // Increase difficulty over time
+      const currentScore = Math.floor(score / 10);
+      difficultyRef.current = 1 + currentScore * 0.05; // Gradually increase speed
+
       setScore((prev) => prev + 1);
     }, 30);
 
     return () => clearInterval(gameLoopRef.current as NodeJS.Timeout);
-  }, [gameStarted, gameOver, dinoY]);
+  }, [gameStarted, gameOver, dinoY, score]);
 
   useEffect(() => {
     if (!gameStarted || gameOver) return;
@@ -104,7 +111,7 @@ export default function DinoGame({ onClose }: DinoGameProps) {
         ...prev,
         { id: obstacleIdRef.current++, x: GAME_WIDTH },
       ]);
-    }, 3000);
+    }, Math.max(1500, 3000 / difficultyRef.current)); // Spawn faster as difficulty increases
 
     return () => clearInterval(spawnObstacleRef.current as NodeJS.Timeout);
   }, [gameStarted, gameOver]);
@@ -177,20 +184,22 @@ export default function DinoGame({ onClose }: DinoGameProps) {
 
             {gameOver && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 rounded">
-                <p className="text-4xl font-bold text-white mb-4">Game Over!</p>
+                <p className="text-4xl font-bold text-white mb-4 animate-bounce">Game Over!</p>
                 <p className="text-2xl text-yellow-300 mb-8">
                   Final Score: {Math.floor(score / 10)}
                 </p>
                 <div className="space-x-4">
                   <button
                     onClick={startGame}
-                    className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded transition"
+                    className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded transition active:scale-95 hover:scale-105"
+                    aria-label="Play again"
                   >
                     Play Again
                   </button>
                   <button
                     onClick={submitScore}
-                    className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded transition"
+                    className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded transition active:scale-95 hover:scale-105"
+                    aria-label="Submit score"
                   >
                     Submit Score
                   </button>
@@ -202,7 +211,8 @@ export default function DinoGame({ onClose }: DinoGameProps) {
 
         <button
           onClick={onClose}
-          className="mt-6 w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition"
+          className="mt-6 w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition active:scale-95 hover:scale-102"
+          aria-label="Close game"
         >
           Close
         </button>

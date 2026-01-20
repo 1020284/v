@@ -41,15 +41,16 @@ export default function GroupChatComponent({ group }: GroupChatProps) {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (messageText.trim()) {
-      const socket = getSocket();
-      socket?.emit('groupMessage', {
-        groupId: group.id,
-        text: messageText,
-        fromName: userName,
-      });
-      setMessageText('');
-    }
+    const trimmed = messageText.trim();
+    if (!trimmed || trimmed.length > 1000) return; // Max 1000 chars
+    const socket = getSocket();
+    if (!socket) return;
+    socket.emit('groupMessage', {
+      groupId: group.id,
+      text: trimmed,
+      fromName: userName,
+    });
+    setMessageText('');
   };
 
   return (

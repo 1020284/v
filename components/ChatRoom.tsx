@@ -25,11 +25,12 @@ export default function ChatRoom() {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (messageText.trim()) {
-      const socket = getSocket();
-      socket?.emit('message', { text: messageText, name: userName });
-      setMessageText('');
-    }
+    const trimmed = messageText.trim();
+    if (!trimmed || trimmed.length > 1000) return; // Max 1000 chars
+    const socket = getSocket();
+    if (!socket) return;
+    socket.emit('message', { text: trimmed, name: userName });
+    setMessageText('');
   };
 
   const handleReaction = (emoji: string, messageId: string) => {

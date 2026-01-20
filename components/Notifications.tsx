@@ -13,32 +13,33 @@ export default function Notifications() {
     <div className="relative">
       <button
         onClick={() => setShowNotifications(!showNotifications)}
-        className="relative px-4 py-2 bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 transition"
+        className="relative px-4 py-2 bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 transition transform hover:scale-105 active:scale-95"
+        aria-label={`Notifications ${unreadCount > 0 ? `- ${unreadCount} unread` : ''}`}
       >
         🔔 Notifications
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
+          <span className="absolute top-0 right-0 -mt-2 -mr-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold animate-pulse">
             {unreadCount}
           </span>
         )}
       </button>
 
       {showNotifications && (
-        <div className="absolute right-0 mt-2 w-96 max-h-96 bg-gradient-to-br from-gray-900 to-black border border-white/20 rounded-lg shadow-2xl overflow-y-auto z-40">
+        <div className="absolute right-0 mt-2 w-96 max-h-96 bg-gradient-to-br from-gray-900 to-black border border-white/20 rounded-lg shadow-2xl overflow-y-auto z-40 animate-in fade-in slide-in-from-top-2">
           {notifications.length === 0 ? (
-            <div className="p-4 text-white/60 text-center">No notifications</div>
+            <div className="p-4 text-white/60 text-center text-sm">No notifications yet</div>
           ) : (
             <div className="p-4 space-y-2">
               {notifications.slice().reverse().map((notif) => (
-                <div
+                <button
                   key={notif.id}
                   onClick={() => {
                     if (!notif.read) markNotificationAsRead(notif.id);
                   }}
-                  className={`p-3 rounded-lg cursor-pointer transition ${
+                  className={`w-full text-left p-3 rounded-lg cursor-pointer transition transform hover:scale-102 active:scale-98 ${
                     notif.read
-                      ? 'bg-white/5 border border-white/10'
-                      : 'bg-blue-500/20 border border-blue-500/30'
+                      ? 'bg-white/5 border border-white/10 hover:bg-white/10'
+                      : 'bg-blue-500/20 border border-blue-500/30 hover:bg-blue-500/30'
                   }`}
                 >
                   <p className="text-white font-semibold text-sm">{notif.title}</p>
@@ -46,7 +47,7 @@ export default function Notifications() {
                   <p className="text-white/40 text-xs mt-2">
                     {new Date(notif.timestamp).toLocaleTimeString()}
                   </p>
-                </div>
+                </button>
               ))}
             </div>
           )}
