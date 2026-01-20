@@ -1,36 +1,114 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ChatHub 🌍
+
+A real-time chat application with voice calling capabilities. Chat with everyone on the site instantly and have voice conversations!
+
+## Features
+
+✨ **Core Features:**
+- 💬 Real-time text messaging
+- 🎙️ Voice chat with WebRTC
+- 👥 Live user list
+- 🎨 Beautiful gradient UI
+- ⚡ Lightning-fast messaging
+
+## Tech Stack
+
+- **Frontend:** Next.js 16, React 19, TypeScript, Tailwind CSS
+- **Real-time Communication:** Socket.io
+- **Voice Chat:** WebRTC with simple-peer
+- **State Management:** Zustand
+- **Deployment:** Vercel
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone <repository-url>
+cd v
+
+# Install dependencies
+npm install
+
+# Start the development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Building for Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm run start
+```
 
-## Learn More
+## Usage
 
-To learn more about Next.js, take a look at the following resources:
+1. **Join the Chat:** Enter your name on the home screen
+2. **Send Messages:** Type and send messages to chat with everyone
+3. **Start a Voice Call:** Click the 🎙️ button next to a user's name to initiate a voice call
+4. **Hang Up:** Click "Hang Up" to end the voice call
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment on Vercel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Deploy with Vercel CLI
 
-## Deploy on Vercel
+```bash
+npm install -g vercel
+vercel
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Deploy from GitHub
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Push your code to GitHub
+2. Go to [https://vercel.com/new](https://vercel.com/new)
+3. Select your GitHub repository
+4. Vercel will automatically detect it's a Next.js app
+5. Click **Deploy**
+
+## Architecture
+
+### Components
+
+- **NameSelector:** User name selection interface
+- **ChatRoom:** Main messaging interface
+- **UserList:** Live users display with voice call buttons
+- **VoiceChat:** WebRTC voice call modal
+
+### Server
+
+The app uses Socket.io for real-time communication:
+- User management (join/leave)
+- Message broadcasting
+- Voice call signaling (WebRTC offer/answer)
+- ICE candidate handling
+
+## Known Limitations
+
+- Voice chat requires HTTPS in production (WebRTC requirement)
+- Microphone access requires user permission
+- Messages are stored in memory (not persisted to database)
+
+## Future Enhancements
+
+- [ ] Message persistence with database
+- [ ] User authentication
+- [ ] Private messaging
+- [ ] Screen sharing
+- [ ] Message search
+- [ ] User profiles
+- [ ] Typing indicators
+
+## License
+
+MIT
+
+---
+
+**Built with ❤️ using Next.js and Socket.io**
