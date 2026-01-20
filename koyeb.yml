@@ -1,0 +1,20 @@
+name: the-chat
+
+services:
+  web:
+    build:
+      buildpack: node
+    run:
+      command: npm run start
+    http:
+      routes:
+        - path: /
+    ports:
+      - port: 3000
+        protocol: http
+    env:
+      - key: NODE_ENV
+        value: production
+
+regions:
+  - name: fra

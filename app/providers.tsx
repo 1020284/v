@@ -16,7 +16,8 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     if (!userName || socket?.connected) return;
 
     // Initialize Socket.io connection
-    socket = io(undefined, {
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || window.location.origin;
+    socket = io(socketUrl, {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
